@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
-import { TextField, Button, Box, Typography, Grid, Card } from "@mui/material";
+import { TextField, Button, Box, Typography, Grid, Card } from "@mui/material"; 
 import QRCode from "react-qr-code";
 
 // Configure the API URL and site URL
