@@ -3,7 +3,9 @@ import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-route
 import { TextField, Button, Box, Typography, Grid, Card } from "@mui/material";
 import QRCode from "react-qr-code";
 
+// Configure the API URL and site URL
 const API_URL = "https://lotterywheel-backend.onrender.com";
+const SITE_URL = process.env.REACT_APP_SITE_URL || window.location.origin;
 
 const App = () => {
   return (
@@ -24,34 +26,47 @@ const SchemeForm = () => {
   const [endDate, setEndDate] = useState("");
   const [qrUrl, setQrUrl] = useState("");
   const [ticketNumber, setTicketNumber] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const schemeId = new Date().getTime(); // Unique ID
-    const url = `${window.location.origin}/participation/${schemeId}`;
-    setQrUrl(url); // Set the URL for QR code
-
-    const randomTicket = Math.floor(100000 + Math.random() * 900000); // Generate random ticket number
-    setTicketNumber(randomTicket);
-
-    const schemeData = {
-      schemeName,
-      description,
-      startDate,
-      endDate,
-      ticketNumber: randomTicket,
-    };
+    setError("");
+    setLoading(true);
 
     try {
+      const schemeId = new Date().getTime(); // Unique ID
+      const url = `${SITE_URL}/participation/${schemeId}`;
+      setQrUrl(url);
+
+      const randomTicket = Math.floor(100000 + Math.random() * 900000);
+      setTicketNumber(randomTicket);
+
+      const schemeData = {
+        id: schemeId,
+        schemeName,
+        description,
+        startDate,
+        endDate,
+        ticketNumber: randomTicket,
+      };
+
       const response = await fetch(`${API_URL}/api/scheme`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(schemeData),
       });
-      if (!response.ok) throw new Error("Failed to save scheme data");
+
+      if (!response.ok) {
+        throw new Error("Failed to save scheme data");
+      }
+
       console.log("Scheme data saved successfully");
     } catch (error) {
+      setError(error.message);
       console.error(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -80,6 +95,7 @@ const SchemeForm = () => {
             value={schemeName}
             onChange={(e) => setSchemeName(e.target.value)}
             required
+            disabled={loading}
           />
           <TextField
             label="Scheme Description"
@@ -91,6 +107,7 @@ const SchemeForm = () => {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             required
+            disabled={loading}
           />
           <Grid container spacing={2}>
             <Grid item xs={6}>
@@ -102,6 +119,7 @@ const SchemeForm = () => {
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 required
+                disabled={loading}
               />
             </Grid>
             <Grid item xs={6}>
@@ -113,11 +131,24 @@ const SchemeForm = () => {
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 required
+                disabled={loading}
               />
             </Grid>
           </Grid>
-          <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 3 }}>
-            Generate QR Code
+          {error && (
+            <Typography color="error" sx={{ mt: 2 }}>
+              {error}
+            </Typography>
+          )}
+          <Button 
+            type="submit" 
+            variant="contained" 
+            color="primary" 
+            fullWidth 
+            sx={{ mt: 3 }}
+            disabled={loading}
+          >
+            {loading ? "Generating..." : "Generate QR Code"}
           </Button>
         </form>
       </Card>
@@ -126,9 +157,14 @@ const SchemeForm = () => {
           <Typography variant="h6" color="secondary" gutterBottom>
             Scan this QR Code to participate:
           </Typography>
-          <QRCode value={qrUrl} />
+          <Box sx={{ bgcolor: 'white', p: 2, display: 'inline-block', borderRadius: 2 }}>
+            <QRCode value={qrUrl} />
+          </Box>
           <Typography variant="body1" sx={{ mt: 2 }}>
             Your Ticket Number: <strong>{ticketNumber}</strong>
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
+            Direct link: <a href={qrUrl} target="_blank" rel="noopener noreferrer">{qrUrl}</a>
           </Typography>
         </Box>
       )}
@@ -145,6 +181,8 @@ const ParticipationForm = () => {
     contactNo: "",
     email: "",
   });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -152,17 +190,27 @@ const ParticipationForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
+
     try {
       const response = await fetch(`${API_URL}/api/participation`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-      if (!response.ok) throw new Error("Failed to save participation data");
+
+      if (!response.ok) {
+        throw new Error("Failed to save participation data");
+      }
+
       console.log("Participation data saved successfully");
       navigate("/congratulations");
     } catch (error) {
+      setError(error.message);
       console.error(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -193,6 +241,7 @@ const ParticipationForm = () => {
                 value={formData.firstName}
                 onChange={handleChange}
                 required
+                disabled={loading}
               />
             </Grid>
             <Grid item xs={6}>
@@ -204,6 +253,7 @@ const ParticipationForm = () => {
                 value={formData.lastName}
                 onChange={handleChange}
                 required
+                disabled={loading}
               />
             </Grid>
           </Grid>
@@ -216,6 +266,7 @@ const ParticipationForm = () => {
             value={formData.ticketNo}
             onChange={handleChange}
             required
+            disabled={loading}
           />
           <TextField
             label="Contact Number"
@@ -226,19 +277,34 @@ const ParticipationForm = () => {
             value={formData.contactNo}
             onChange={handleChange}
             required
+            disabled={loading}
           />
           <TextField
             label="Email Address"
             name="email"
+            type="email"
             variant="outlined"
             fullWidth
             margin="normal"
             value={formData.email}
             onChange={handleChange}
             required
+            disabled={loading}
           />
-          <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 3 }}>
-            Submit
+          {error && (
+            <Typography color="error" sx={{ mt: 2 }}>
+              {error}
+            </Typography>
+          )}
+          <Button 
+            type="submit" 
+            variant="contained" 
+            color="primary" 
+            fullWidth 
+            sx={{ mt: 3 }}
+            disabled={loading}
+          >
+            {loading ? "Submitting..." : "Submit"}
           </Button>
         </form>
       </Card>
