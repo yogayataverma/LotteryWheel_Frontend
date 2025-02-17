@@ -5,7 +5,7 @@ import QRCode from "react-qr-code";
 
 // Configure the API URL and site URL
 const API_URL = "https://lotterywheel-backend.onrender.com";
-const SITE_URL = "https://lotterywheel.netlify.app" || window.location.origin;
+const SITE_URL = "https://lotterywheel.netlify.app" || window.location.origin; 
 
 const App = () => {
   return (
